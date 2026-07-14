@@ -1,4 +1,4 @@
-package com.hitalloazevedo.design-pattern-detector;
+package com.hitalloazevedo.design_pattern_detector;
 
 /**
  * Hello world!

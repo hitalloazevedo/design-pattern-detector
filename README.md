@@ -171,6 +171,242 @@ class D {
 
 ---
 
-## Limitações
+---
 
+## Exemplos de execução
+
+### 1. Decorator com nomes genéricos
+
+Este exemplo utiliza nomes genéricos para demonstrar que a detecção não depende do nome das classes, métodos ou atributos.
+
+#### Código de entrada
+
+**A.java**
+
+```java
+package samples.generic;
+
+public interface A {
+    void run();
+}
+```
+
+**B.java**
+
+```java
+package samples.generic;
+
+public final class B implements A {
+
+    @Override
+    public void run() {
+        System.out.println("Base");
+    }
+}
+```
+
+**C.java**
+
+```java
+package samples.generic;
+
+public final class C implements A {
+
+    private final A value;
+
+    public C(A value) {
+        this.value = value;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Before");
+        value.run();
+        System.out.println("After");
+    }
+}
+```
+
+#### Comando
+
+```bash
+mvn exec:java -Dexec.args="samples/generic"
+```
+
+#### Saída gerada
+
+```text
+[PADRÃO DETECTADO] DECORATOR
+Elementos identificados:
+- A classe samples.generic.C implementa ou estende samples.generic.A. — samples/generic/C.java:3
+- A classe possui o atributo de instância value do tipo samples.generic.A. — samples/generic/C.java:5
+- O parâmetro value é armazenado no atributo value. — samples/generic/C.java:8
+- Uma operação é delegada para o atributo value por meio da chamada value.run(...). — samples/generic/C.java:14
+Vantagem neste contexto: A classe samples.generic.C pode adicionar comportamento ao contrato samples.generic.A sem modificar o objeto armazenado no atributo value. Como ambos seguem o mesmo contrato, os objetos podem ser combinados em cadeia.
+Risco/desvantagem neste contexto: A classe samples.generic.C adiciona uma nova camada de delegação por meio do atributo value. O uso de várias camadas semelhantes pode dificultar o acompanhamento da ordem das chamadas. Foi encontrada 1 chamada delegada para esse atributo.
+```
+
+A classe `C` implementa a abstração `A`, armazena outro objeto do mesmo tipo e delega a operação `run()` para ele. A identificação ocorre mesmo sem nomes que revelem o padrão.
+
+---
+
+### 2. Adapter
+
+#### Código de entrada
+
+**Adapter.java**
+
+```java
+package samples.adapter;
+
+public interface Adapter {
+    void adapt();
+}
+```
+
+**Legacy.java**
+
+```java
+package samples.adapter;
+
+public final class Legacy {
+
+    public void legacyMethod() {
+        System.out.println("Legacy");
+    }
+}
+```
+
+**ConcreteAdapter.java**
+
+```java
+package samples.adapter;
+
+public final class ConcreteAdapter implements Adapter {
+
+    private final Legacy legacy;
+
+    public ConcreteAdapter(Legacy legacy) {
+        this.legacy = legacy;
+    }
+
+    @Override
+    public void adapt() {
+        this.legacy.legacyMethod();
+        System.out.println("Adapted");
+    }
+}
+```
+
+#### Comando
+
+```bash
+mvn exec:java -Dexec.args="samples/adapter"
+```
+
+#### Saída gerada
+
+```text
+[PADRÃO DETECTADO] ADAPTER
+Elementos identificados:
+- A classe samples.adapter.ConcreteAdapter implementa ou estende o contrato samples.adapter.Adapter. — samples/adapter/ConcreteAdapter.java:3
+- A classe possui o atributo de instância legacy do tipo samples.adapter.Legacy, diferente do contrato implementado. — samples/adapter/ConcreteAdapter.java:5
+- O parâmetro legacy é armazenado no atributo legacy. — samples/adapter/ConcreteAdapter.java:8
+- A classe encaminha uma operação para o atributo legacy por meio da chamada this.legacy.legacyMethod(...). — samples/adapter/ConcreteAdapter.java:13
+Vantagem neste contexto: A classe samples.adapter.ConcreteAdapter permite que um objeto do tipo samples.adapter.Legacy seja utilizado por meio do contrato samples.adapter.Adapter. Dessa forma, o código cliente pode trabalhar com a abstração esperada sem depender diretamente do tipo adaptado.
+Risco/desvantagem neste contexto: A classe samples.adapter.ConcreteAdapter adiciona uma camada intermediária entre o contrato samples.adapter.Adapter e o tipo samples.adapter.Legacy. Além disso, uma estrutura semelhante também pode ocorrer em classes de serviço que delegam operações para uma dependência, o que pode gerar falsos positivos.
+```
+
+A classe `ConcreteAdapter` implementa o contrato esperado pelo cliente, mas encaminha a execução para um objeto de outro tipo.
+
+---
+
+### 3. Strategy
+
+#### Código de entrada
+
+**Strategy.java**
+
+```java
+package samples.strategy;
+
+public interface Strategy {
+    void execute();
+}
+```
+
+**ConcreteA.java**
+
+```java
+package samples.strategy;
+
+public final class ConcreteA implements Strategy {
+
+    @Override
+    public void execute() {
+        System.out.println("A");
+    }
+}
+```
+
+**ConcreteB.java**
+
+```java
+package samples.strategy;
+
+public final class ConcreteB implements Strategy {
+
+    @Override
+    public void execute() {
+        System.out.println("B");
+    }
+}
+```
+
+**Orchestrator.java**
+
+```java
+package samples.strategy;
+
+public final class Orchestrator {
+
+    private Strategy strategy;
+
+    public void setStrategy(Strategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void executeStrategy() {
+        strategy.execute();
+    }
+}
+```
+
+#### Comando
+
+```bash
+mvn exec:java -Dexec.args="samples/strategy"
+```
+
+#### Saída gerada
+
+```text
+[PADRÃO DETECTADO] STRATEGY
+Elementos identificados:
+- samples.strategy.Strategy é uma abstração com 2 implementações concretas. — samples/strategy/Strategy.java:3
+- A classe samples.strategy.ConcreteA implementa ou estende samples.strategy.Strategy. — samples/strategy/ConcreteA.java:3
+- A classe samples.strategy.ConcreteB implementa ou estende samples.strategy.Strategy. — samples/strategy/ConcreteB.java:3
+- A classe samples.strategy.Orchestrator possui o atributo de instância strategy do tipo samples.strategy.Strategy. — samples/strategy/Orchestrator.java:4
+- O parâmetro strategy é armazenado no atributo strategy. — samples/strategy/Orchestrator.java:8
+- A classe samples.strategy.Orchestrator delega uma operação para o atributo strategy por meio da chamada strategy.execute(...). — samples/strategy/Orchestrator.java:12
+Vantagem neste contexto: A classe samples.strategy.Orchestrator pode alterar o comportamento utilizado ao substituir o objeto armazenado no atributo strategy. Foram encontradas 2 implementações concretas de samples.strategy.Strategy, permitindo a troca do comportamento sem modificar a classe de contexto.
+Risco/desvantagem neste contexto: A estrutura envolve a classe de contexto samples.strategy.Orchestrator, a abstração samples.strategy.Strategy e 2 implementações concretas. Para compreender o comportamento executado, é necessário identificar qual implementação foi atribuída ao atributo strategy.
+```
+
+A abstração possui duas implementações concretas e a classe de contexto mantém uma referência substituível para essa abstração.
+
+
+---
+
+## Limitações
 A ferramenta utiliza heurísticas estruturais e, por isso, pode produzir falsos positivos quando classes comuns apresentam relações semelhantes às de um padrão. O Adapter pode ser confundido com serviços que implementam uma interface e delegam operações para uma dependência. Implementações que não utilizam delegação explícita podem não ser detectadas. O Strategy exige pelo menos duas implementações concretas da abstração. A ferramenta não analisa o comportamento em tempo de execução. Reflexão, proxies, classes geradas dinamicamente, lambdas e mecanismos externos de injeção de dependência não são tratados. A resolução de tipos também pode ser limitada quando as dependências externas do projeto não estão disponíveis.

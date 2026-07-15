@@ -78,8 +78,17 @@ public final class ProjectModelPrinter {
                 }
 
                 for (FieldModel field : type.fields()) {
-                        output.append("    - ")
-                                        .append(field.type())
+                        output.append("    - ");
+
+                        if (field.isStatic()) {
+                                output.append("static ");
+                        }
+
+                        if (field.isFinal()) {
+                                output.append("final ");
+                        }
+
+                        output.append(field.type())
                                         .append(" ")
                                         .append(field.name())
                                         .append(" [line ")

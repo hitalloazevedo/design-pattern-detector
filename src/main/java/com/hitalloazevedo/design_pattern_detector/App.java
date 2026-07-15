@@ -4,6 +4,8 @@ import java.io.IOException;
 import com.hitalloazevedo.design_pattern_detector.application.AnalysisService;
 import com.hitalloazevedo.design_pattern_detector.application.ApplicationFactory;
 import com.hitalloazevedo.design_pattern_detector.debug.ProjectModelPrinter;
+import com.hitalloazevedo.design_pattern_detector.parser.JavaSourceParseException;
+import com.hitalloazevedo.design_pattern_detector.parser.SourceInputException;
 import com.hitalloazevedo.design_pattern_detector.report.ConsoleReportGenerator;
 import com.hitalloazevedo.design_pattern_detector.report.ReportGenerator;
 import com.hitalloazevedo.design_pattern_detector.result.AnalysisReport;
@@ -14,24 +16,23 @@ public class App {
       AnalysisService service = ApplicationFactory.createAnalysisService();
 
       AnalysisReport report = service.analyze(args);
-      
-      ProjectModelPrinter printer =
-              new ProjectModelPrinter();
+
+      ProjectModelPrinter printer = new ProjectModelPrinter();
 
       System.out.println(
-              printer.print(report.project())
-      );
+          printer.print(report.project()));
 
       ReportGenerator reportGenerator = new ConsoleReportGenerator();
 
       System.out.println(
           reportGenerator.generate(report));
-
-    } catch (IllegalArgumentException exception) {
+    } catch (SourceInputException exception) {
       System.err.println(exception.getMessage());
       printUsage();
       System.exit(1);
-
+    } catch (JavaSourceParseException exception) {
+      System.err.println(exception.getMessage());
+      System.exit(1);
     } catch (IOException exception) {
       System.err.println(
           "Erro ao ler os arquivos: "

@@ -148,24 +148,33 @@ public final class ProjectModelExtractor {
      *
      * In that case, two FieldModel instances are generated.
      */
-    private List<FieldModel> extractFields(
-            Path sourceFile,
-            ClassOrInterfaceDeclaration declaration) {
-        List<FieldModel> fields = new ArrayList<>();
+private List<FieldModel> extractFields(
+        Path sourceFile,
+        ClassOrInterfaceDeclaration declaration
+) {
+    List<FieldModel> fields = new ArrayList<>();
 
-        declaration.getFields().forEach(fieldDeclaration -> {
-            for (VariableDeclarator variable : fieldDeclaration.getVariables()) {
+    declaration.getFields().forEach(fieldDeclaration -> {
+        boolean isStatic = fieldDeclaration.isStatic();
+        boolean isFinal = fieldDeclaration.isFinal();
 
-                fields.add(
-                        new FieldModel(
-                                variable.getNameAsString(),
-                                extractTypeName(variable.getType()),
-                                locationOf(sourceFile, variable)));
-            }
-        });
+        for (VariableDeclarator variable
+                : fieldDeclaration.getVariables()) {
 
-        return List.copyOf(fields);
-    }
+            fields.add(
+                    new FieldModel(
+                            variable.getNameAsString(),
+                            extractTypeName(variable.getType()),
+                            isStatic,
+                            isFinal,
+                            locationOf(sourceFile, variable)
+                    )
+            );
+        }
+    });
+
+    return List.copyOf(fields);
+}
 
     private List<ConstructorModel> extractConstructors(
             Path sourceFile,

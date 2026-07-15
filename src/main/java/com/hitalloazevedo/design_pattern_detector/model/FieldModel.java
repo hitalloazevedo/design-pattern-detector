@@ -5,6 +5,8 @@ import java.util.Objects;
 public record FieldModel(
         String name,
         String type,
+        boolean isStatic,
+        boolean isFinal,
         SourceLocation location
 ) {
     public FieldModel {

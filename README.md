@@ -1,8 +1,151 @@
+<style>
+@page {
+  size: A4;
+  margin: 18mm 16mm 18mm 16mm;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.45;
+  color: #111;
+  background: #fff;
+}
+
+body {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  font-size: 24pt;
+  margin: 0 0 14pt;
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: 17pt;
+  margin-top: 22pt;
+  padding-bottom: 4pt;
+  border-bottom: 1px solid #bbb;
+  page-break-after: avoid;
+}
+
+h3 {
+  font-size: 14pt;
+  margin-top: 18pt;
+  page-break-after: avoid;
+}
+
+h4 {
+  font-size: 12pt;
+  margin-top: 14pt;
+  page-break-after: avoid;
+}
+
+p, li {
+  orphans: 3;
+  widows: 3;
+}
+
+ul, ol {
+  padding-left: 22px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #bbb;
+  margin: 20pt 0;
+}
+
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 9pt;
+}
+
+pre {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow-x: visible !important;
+  max-width: 100%;
+  padding: 10pt;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f6f6f6;
+  page-break-inside: avoid;
+}
+
+pre code {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+a {
+  color: #111;
+  text-decoration: underline;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  page-break-inside: avoid;
+}
+
+th, td {
+  border: 1px solid #bbb;
+  padding: 6pt;
+  vertical-align: top;
+}
+
+blockquote {
+  margin: 10pt 0;
+  padding-left: 12pt;
+  border-left: 3px solid #999;
+}
+
+.page-break {
+  break-before: page;
+  page-break-before: always;
+}
+
+.no-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+@media print {
+  html, body {
+    width: 100%;
+  }
+
+  pre, code {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  h1, h2, h3, h4 {
+    break-after: avoid;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+}
+</style>
+
+<div class="no-break">
+
 # Detector Estático de Padrões de Design
 
-GitHub: https://github.com/hitalloazevedo/design-pattern-detector
+**Repositório:** <https://github.com/hitalloazevedo/design-pattern-detector>
 
 A ferramenta realiza análise estática da estrutura do código-fonte utilizando a Árvore Sintática Abstrata (AST) e resolução de símbolos, sem executar o programa. A detecção é baseada apenas na estrutura das classes e em seus relacionamentos.
+
+</div>
 
 ---
 
@@ -171,7 +314,7 @@ class D {
 
 ---
 
----
+<div class="page-break"></div>
 
 ## Exemplos de execução
 
@@ -250,6 +393,8 @@ A classe `C` implementa a abstração `A`, armazena outro objeto do mesmo tipo e
 
 ---
 
+<div class="page-break"></div>
+
 ### 2. Adapter
 
 #### Código de entrada
@@ -320,6 +465,8 @@ Risco/desvantagem neste contexto: A classe samples.adapter.ConcreteAdapter adici
 A classe `ConcreteAdapter` implementa o contrato esperado pelo cliente, mas encaminha a execução para um objeto de outro tipo.
 
 ---
+
+<div class="page-break"></div>
 
 ### 3. Strategy
 
@@ -407,6 +554,8 @@ A abstração possui duas implementações concretas e a classe de contexto mant
 
 
 ---
+
+<div class="page-break"></div>
 
 ## Limitações
 A ferramenta utiliza heurísticas estruturais e, por isso, pode produzir falsos positivos quando classes comuns apresentam relações semelhantes às de um padrão. O Adapter pode ser confundido com serviços que implementam uma interface e delegam operações para uma dependência. Implementações que não utilizam delegação explícita podem não ser detectadas. O Strategy exige pelo menos duas implementações concretas da abstração. A ferramenta não analisa o comportamento em tempo de execução. Reflexão, proxies, classes geradas dinamicamente, lambdas e mecanismos externos de injeção de dependência não são tratados. A resolução de tipos também pode ser limitada quando as dependências externas do projeto não estão disponíveis.

@@ -28,7 +28,6 @@ import com.hitalloazevedo.design_pattern_detector.model.SourceLocation;
 import com.hitalloazevedo.design_pattern_detector.model.TypeKind;
 import com.hitalloazevedo.design_pattern_detector.model.TypeModel;
 import com.github.javaparser.ast.expr.AssignExpr;
-import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.hitalloazevedo.design_pattern_detector.model.FieldAssignmentModel;

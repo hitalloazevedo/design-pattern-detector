@@ -7,6 +7,7 @@ import com.hitalloazevedo.design_pattern_detector.detector.DecoratorDetector;
 import com.hitalloazevedo.design_pattern_detector.detector.StrategyDetector;
 import com.hitalloazevedo.design_pattern_detector.parser.ProjectModelExtractor;
 import com.hitalloazevedo.design_pattern_detector.parser.SourceInputHandler;
+import com.hitalloazevedo.design_pattern_detector.parser.SourceRootResolver;
 
 public final class ApplicationFactory {
 
@@ -16,6 +17,7 @@ public final class ApplicationFactory {
     public static AnalysisService createAnalysisService() {
         return new AnalysisService(
                 new SourceInputHandler(),
+                new SourceRootResolver(),
                 new ProjectModelExtractor(),
                 List.of(
                         new DecoratorDetector(),

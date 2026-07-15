@@ -27,6 +27,11 @@ import com.hitalloazevedo.design_pattern_detector.model.ProjectModel;
 import com.hitalloazevedo.design_pattern_detector.model.SourceLocation;
 import com.hitalloazevedo.design_pattern_detector.model.TypeKind;
 import com.hitalloazevedo.design_pattern_detector.model.TypeModel;
+import com.github.javaparser.ast.expr.AssignExpr;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.FieldAccessExpr;
+import com.github.javaparser.ast.expr.NameExpr;
+import com.hitalloazevedo.design_pattern_detector.model.FieldAssignmentModel;
 
 /**
  * Converts JavaParser AST nodes into the internal structural model used by
@@ -172,6 +177,9 @@ public final class ProjectModelExtractor {
             constructors.add(
                     new ConstructorModel(
                             extractParameters(constructor),
+                            extractFieldAssignments(
+                                    sourceFile,
+                                    constructor),
                             locationOf(sourceFile, constructor)));
         }
 
@@ -189,11 +197,100 @@ public final class ProjectModelExtractor {
                             method.getNameAsString(),
                             extractTypeName(method.getType()),
                             extractParameters(method),
-                            extractMethodCalls(sourceFile, method),
+                            extractMethodCalls(
+                                    sourceFile,
+                                    declaration,
+                                    method),
+                            extractFieldAssignments(
+                                    sourceFile,
+                                    method),
                             locationOf(sourceFile, method)));
         }
 
         return List.copyOf(methods);
+    }
+
+    private List<FieldAssignmentModel> extractFieldAssignments(
+            Path sourceFile,
+            Node callable) {
+        return callable.findAll(AssignExpr.class)
+                .stream()
+                .map(assignment -> extractFieldAssignment(
+                        sourceFile,
+                        assignment))
+                .flatMap(Optional::stream)
+                .toList();
+    }
+
+    private Optional<FieldAssignmentModel> extractFieldAssignment(
+            Path sourceFile,
+            AssignExpr assignment) {
+        Optional<String> fieldName = extractAssignedFieldName(
+                assignment.getTarget());
+
+        if (fieldName.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Expression value = assignment.getValue();
+
+        Optional<String> sourceName = extractSourceName(value);
+
+        Optional<String> sourceType = resolveExpressionType(value);
+
+        return Optional.of(
+                new FieldAssignmentModel(
+                        fieldName.get(),
+                        value.toString(),
+                        sourceName,
+                        sourceType,
+                        locationOf(sourceFile, assignment)));
+    }
+
+    private Optional<String> extractAssignedFieldName(
+            Expression target) {
+        if (target.isFieldAccessExpr()) {
+            FieldAccessExpr fieldAccess = target.asFieldAccessExpr();
+
+            if (fieldAccess.getScope().isThisExpr()) {
+                return Optional.of(
+                        fieldAccess.getNameAsString());
+            }
+
+            return Optional.empty();
+        }
+
+        if (target.isNameExpr()) {
+            NameExpr nameExpression = target.asNameExpr();
+
+            try {
+                var resolved = nameExpression.resolve();
+
+                if (resolved.isField()) {
+                    return Optional.of(
+                            resolved.getName());
+                }
+            } catch (RuntimeException exception) {
+                /*
+                 * Without symbol resolution, a simple target could be
+                 * either a local variable or a field. Do not guess here.
+                 */
+                return Optional.empty();
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private Optional<String> extractSourceName(
+            Expression expression) {
+        if (expression.isNameExpr()) {
+            return Optional.of(
+                    expression.asNameExpr()
+                            .getNameAsString());
+        }
+
+        return Optional.empty();
     }
 
     private List<ParameterModel> extractParameters(
@@ -208,23 +305,32 @@ public final class ProjectModelExtractor {
 
     private List<MethodCallModel> extractMethodCalls(
             Path sourceFile,
+            ClassOrInterfaceDeclaration owner,
             MethodDeclaration method) {
         return method.findAll(MethodCallExpr.class)
                 .stream()
-                .map(methodCall -> extractMethodCall(sourceFile, methodCall))
+                .map(methodCall -> extractMethodCall(
+                        sourceFile,
+                        owner,
+                        methodCall))
                 .toList();
     }
 
     private MethodCallModel extractMethodCall(
             Path sourceFile,
+            ClassOrInterfaceDeclaration owner,
             MethodCallExpr methodCall) {
-        Optional<String> scope = methodCall
-                .getScope()
+        Optional<Expression> scopeExpression = methodCall.getScope();
+
+        Optional<String> scope = scopeExpression
                 .map(Expression::toString);
 
-        Optional<String> scopeType = methodCall
-                .getScope()
+        Optional<String> scopeType = scopeExpression
                 .flatMap(this::resolveExpressionType);
+
+        Optional<String> referencedFieldName = scopeExpression.flatMap(scopeValue -> resolveReferencedFieldName(
+                scopeValue,
+                owner));
 
         List<String> argumentTypes = methodCall
                 .getArguments()
@@ -235,9 +341,52 @@ public final class ProjectModelExtractor {
         return new MethodCallModel(
                 scope,
                 scopeType,
+                referencedFieldName,
                 methodCall.getNameAsString(),
                 argumentTypes,
                 locationOf(sourceFile, methodCall));
+    }
+
+    private Optional<String> resolveReferencedFieldName(
+            Expression scope,
+            ClassOrInterfaceDeclaration owner) {
+        Optional<String> candidate = extractSimpleScopeName(scope);
+
+        if (candidate.isEmpty()) {
+            return Optional.empty();
+        }
+
+        String fieldName = candidate.get();
+
+        boolean declaredField = owner.getFields()
+                .stream()
+                .flatMap(field -> field.getVariables().stream())
+                .anyMatch(variable -> variable.getNameAsString()
+                        .equals(fieldName));
+
+        return declaredField
+                ? Optional.of(fieldName)
+                : Optional.empty();
+    }
+
+    private Optional<String> extractSimpleScopeName(
+            Expression scope) {
+        if (scope.isNameExpr()) {
+            return Optional.of(
+                    scope.asNameExpr()
+                            .getNameAsString());
+        }
+
+        if (scope.isFieldAccessExpr()) {
+            FieldAccessExpr fieldAccess = scope.asFieldAccessExpr();
+
+            if (fieldAccess.getScope().isThisExpr()) {
+                return Optional.of(
+                        fieldAccess.getNameAsString());
+            }
+        }
+
+        return Optional.empty();
     }
 
     /**

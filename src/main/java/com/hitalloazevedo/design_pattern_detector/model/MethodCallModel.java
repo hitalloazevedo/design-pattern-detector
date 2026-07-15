@@ -7,19 +7,33 @@ import java.util.Optional;
 public record MethodCallModel(
         Optional<String> scope,
         Optional<String> scopeType,
+        Optional<String> referencedFieldName,
         String methodName,
         List<String> argumentTypes,
         SourceLocation location
 ) {
     public MethodCallModel {
         Objects.requireNonNull(scope, "scope cannot be null");
-        Objects.requireNonNull(scopeType, "scopeType cannot be null");
-        Objects.requireNonNull(methodName, "methodName cannot be null");
+        Objects.requireNonNull(
+                scopeType,
+                "scopeType cannot be null"
+        );
+        Objects.requireNonNull(
+                referencedFieldName,
+                "referencedFieldName cannot be null"
+        );
+        Objects.requireNonNull(
+                methodName,
+                "methodName cannot be null"
+        );
         Objects.requireNonNull(
                 argumentTypes,
                 "argumentTypes cannot be null"
         );
-        Objects.requireNonNull(location, "location cannot be null");
+        Objects.requireNonNull(
+                location,
+                "location cannot be null"
+        );
 
         if (methodName.isBlank()) {
             throw new IllegalArgumentException(
@@ -30,12 +44,9 @@ public record MethodCallModel(
         argumentTypes = List.copyOf(argumentTypes);
     }
 
-    public boolean isCalledOn(String expression) {
-        return scope
-                .map(value ->
-                        value.equals(expression)
-                                || value.equals("this." + expression)
-                )
+    public boolean isCalledOn(String fieldName) {
+        return referencedFieldName
+                .map(fieldName::equals)
                 .orElse(false);
     }
 }

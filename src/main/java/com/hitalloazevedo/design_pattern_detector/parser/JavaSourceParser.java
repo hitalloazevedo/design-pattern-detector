@@ -1,6 +1,7 @@
 package com.hitalloazevedo.design_pattern_detector.parser;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -19,21 +20,55 @@ public final class JavaSourceParser {
     private final JavaParser parser;
 
     public JavaSourceParser(Iterable<Path> sourceRoots) {
-        CombinedTypeSolver typeSolver = new CombinedTypeSolver();
+        Objects.requireNonNull(
+                sourceRoots,
+                "sourceRoots cannot be null"
+        );
+
+        CombinedTypeSolver typeSolver =
+                new CombinedTypeSolver();
 
         typeSolver.add(new ReflectionTypeSolver());
 
+        int validRootCount = 0;
+
         for (Path sourceRoot : sourceRoots) {
+            if (sourceRoot == null) {
+                continue;
+            }
+
+            Path normalizedRoot = sourceRoot
+                    .toAbsolutePath()
+                    .normalize();
+
+            if (!Files.isDirectory(normalizedRoot)) {
+                continue;
+            }
+
             typeSolver.add(
-                    new JavaParserTypeSolver(sourceRoot));
+                    new JavaParserTypeSolver(
+                            normalizedRoot
+                    )
+            );
+
+            validRootCount++;
         }
 
-        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
+        if (validRootCount == 0) {
+            throw new IllegalArgumentException(
+                    "At least one valid source root is required."
+            );
+        }
 
-        ParserConfiguration configuration = new ParserConfiguration()
-                .setLanguageLevel(
-                        ParserConfiguration.LanguageLevel.JAVA_22)
-                .setSymbolResolver(symbolSolver);
+        JavaSymbolSolver symbolSolver =
+                new JavaSymbolSolver(typeSolver);
+
+        ParserConfiguration configuration =
+                new ParserConfiguration()
+                        .setLanguageLevel(
+                                ParserConfiguration.LanguageLevel.JAVA_22
+                        )
+                        .setSymbolResolver(symbolSolver);
 
         this.parser = new JavaParser(configuration);
     }
@@ -43,13 +78,15 @@ public final class JavaSourceParser {
 
         Objects.requireNonNull(
                 sourceFile,
-                "sourceFile cannot be null");
+                "sourceFile cannot be null"
+        );
 
         Path normalizedSourceFile = sourceFile
                 .toAbsolutePath()
                 .normalize();
 
-        ParseResult<CompilationUnit> result = parser.parse(normalizedSourceFile);
+        ParseResult<CompilationUnit> result =
+                parser.parse(normalizedSourceFile);
 
         if (result.isSuccessful()
                 && result.getResult().isPresent()) {
@@ -60,12 +97,14 @@ public final class JavaSourceParser {
                 .stream()
                 .map(Object::toString)
                 .collect(Collectors.joining(
-                        System.lineSeparator()));
+                        System.lineSeparator()
+                ));
 
         throw new IllegalArgumentException(
-                "Não foi possível analisar o arquivo: "
+                "Could not parse Java source file: "
                         + normalizedSourceFile
                         + System.lineSeparator()
-                        + problems);
+                        + problems
+        );
     }
 }

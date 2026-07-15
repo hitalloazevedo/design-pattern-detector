@@ -1,47 +1,33 @@
 package com.hitalloazevedo.design_pattern_detector;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.github.javaparser.ast.CompilationUnit;
-import com.hitalloazevedo.design_pattern_detector.model.ProjectModel;
-import com.hitalloazevedo.design_pattern_detector.parser.JavaSourceParser;
-import com.hitalloazevedo.design_pattern_detector.parser.ParsedSource;
-import com.hitalloazevedo.design_pattern_detector.parser.ProjectModelExtractor;
-import com.hitalloazevedo.design_pattern_detector.parser.SourceInputHandler;
+import com.hitalloazevedo.design_pattern_detector.application.AnalysisService;
+import com.hitalloazevedo.design_pattern_detector.application.ApplicationFactory;
+import com.hitalloazevedo.design_pattern_detector.report.ConsoleReportGenerator;
+import com.hitalloazevedo.design_pattern_detector.report.ReportGenerator;
+import com.hitalloazevedo.design_pattern_detector.result.AnalysisReport;
 
 public class App {
   public static void main(String[] args) {
-    JavaSourceParser parser = new JavaSourceParser();
-    SourceInputHandler inputHandler = new SourceInputHandler();
-
     try {
-      List<Path> javaFiles = inputHandler.resolve(args);
-      List<ParsedSource> parsedSources = new ArrayList<>();
+      AnalysisService service = ApplicationFactory.createAnalysisService();
 
-      for (Path javaFile : javaFiles) {
-        CompilationUnit compilationUnit = parser.parse(javaFile);
+      AnalysisReport report = service.analyze(args);
 
-        parsedSources.add(
-            new ParsedSource(
-                javaFile,
-                compilationUnit));
-      }
+      // ReportGenerator reportGenerator = new ConsoleReportGenerator();
 
-      ProjectModelExtractor extractor = new ProjectModelExtractor();
-
-      ProjectModel project = extractor.extract(parsedSources);
-
-      System.out.println(project);
+      // System.out.println(
+      //     reportGenerator.generate(report));
 
     } catch (IllegalArgumentException exception) {
       System.err.println(exception.getMessage());
       printUsage();
       System.exit(1);
+
     } catch (IOException exception) {
-      System.err.println("Erro ao ler o arquivo: " + exception.getMessage());
+      System.err.println(
+          "Erro ao ler os arquivos: "
+              + exception.getMessage());
       System.exit(1);
     }
   }

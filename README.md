@@ -173,8 +173,4 @@ class D {
 
 ## Limitações
 
-A ferramenta utiliza apenas características estruturais do código. Por isso, podem ocorrer falsos positivos quando uma estrutura semelhante é utilizada sem a intenção de implementar um padrão de projeto.
-
-Também podem ocorrer falsos negativos quando a implementação utiliza estruturas diferentes das normalmente empregadas, principalmente quando não há delegação explícita entre objetos. No caso do Strategy, por exemplo, a detecção depende da existência de duas ou mais implementações da mesma abstração.
-
-Além disso, o detector não analisa o comportamento do programa em tempo de execução. Implementações baseadas em reflexão, geração dinâmica de objetos, proxies, lambdas ou mecanismos externos de geração e injeção de objetos podem não ser identificadas corretamente.
+A ferramenta utiliza heurísticas estruturais e, por isso, pode produzir falsos positivos quando classes comuns apresentam relações semelhantes às de um padrão. O Adapter pode ser confundido com serviços que implementam uma interface e delegam operações para uma dependência. Implementações que não utilizam delegação explícita podem não ser detectadas. O Strategy exige pelo menos duas implementações concretas da abstração. A ferramenta não analisa o comportamento em tempo de execução. Reflexão, proxies, classes geradas dinamicamente, lambdas e mecanismos externos de injeção de dependência não são tratados. A resolução de tipos também pode ser limitada quando as dependências externas do projeto não estão disponíveis.

@@ -1,4 +1,4 @@
-<style>
+<!-- <style>
 @page {
   size: A4;
   margin: 18mm 16mm 18mm 16mm;
@@ -137,7 +137,7 @@ blockquote {
 }
 </style>
 
-<div class="no-break">
+<div class="no-break"> -->
 
 # Detector Estático de Padrões de Design
 

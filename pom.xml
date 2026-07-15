@@ -8,8 +8,6 @@
   <version>1.0-SNAPSHOT</version>
 
   <name>design-pattern-detector</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -45,6 +43,11 @@
       <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -62,7 +65,7 @@
           <configuration>
               <mainClass>com.hitalloazevedo.design_pattern_detector.App</mainClass>
           </configuration>
-      </plugin>
+        </plugin>
 
         <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
         <plugin>

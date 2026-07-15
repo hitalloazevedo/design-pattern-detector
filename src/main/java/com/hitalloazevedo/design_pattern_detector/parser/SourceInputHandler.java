@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,7 +13,7 @@ import java.util.stream.Stream;
 
 public final class SourceInputHandler {
 
-    public List<Path> resolve(String[] arguments) {
+    public SourceInput resolve(String[] arguments) {
         if (arguments == null || arguments.length == 0) {
             throw new IllegalArgumentException(
                     "At least one Java file or directory must be provided."
@@ -20,6 +21,7 @@ public final class SourceInputHandler {
         }
 
         Set<Path> javaFiles = new LinkedHashSet<>();
+        Set<Path> directories = new LinkedHashSet<>();
         List<String> errors = new ArrayList<>();
 
         for (String argument : arguments) {
@@ -33,9 +35,16 @@ public final class SourceInputHandler {
                         .toAbsolutePath()
                         .normalize();
 
-                collectJavaFiles(path, javaFiles, errors);
+                collectInput(
+                        path,
+                        javaFiles,
+                        directories,
+                        errors
+                );
             } catch (InvalidPathException exception) {
-                errors.add("Invalid path: " + argument);
+                errors.add(
+                        "Invalid path: " + argument
+                );
             }
         }
 
@@ -49,35 +58,62 @@ public final class SourceInputHandler {
             );
         }
 
-        return List.copyOf(javaFiles);
+        List<Path> sortedJavaFiles = javaFiles.stream()
+                .sorted(Comparator.comparing(Path::toString))
+                .toList();
+
+        return new SourceInput(
+                sortedJavaFiles,
+                directories
+        );
     }
 
-    private void collectJavaFiles(
+    private void collectInput(
             Path path,
             Set<Path> javaFiles,
+            Set<Path> directories,
             List<String> errors
     ) {
         if (!Files.exists(path)) {
-            errors.add("Path does not exist: " + path);
+            errors.add(
+                    "Path does not exist: " + path
+            );
             return;
         }
 
         if (!Files.isReadable(path)) {
-            errors.add("Path is not readable: " + path);
+            errors.add(
+                    "Path is not readable: " + path
+            );
             return;
         }
 
         if (Files.isRegularFile(path)) {
-            collectSingleFile(path, javaFiles, errors);
+            collectSingleFile(
+                    path,
+                    javaFiles,
+                    errors
+            );
             return;
         }
 
         if (Files.isDirectory(path)) {
-            collectDirectory(path, javaFiles, errors);
+            directories.add(
+                    resolveRealPath(path, errors)
+            );
+
+            collectDirectory(
+                    path,
+                    javaFiles,
+                    errors
+            );
+
             return;
         }
 
-        errors.add("Unsupported path type: " + path);
+        errors.add(
+                "Unsupported path type: " + path
+        );
     }
 
     private void collectSingleFile(
@@ -86,11 +122,15 @@ public final class SourceInputHandler {
             List<String> errors
     ) {
         if (!isJavaFile(file)) {
-            errors.add("File is not a Java source file: " + file);
+            errors.add(
+                    "File is not a Java source file: " + file
+            );
             return;
         }
 
-        javaFiles.add(resolveRealPath(file, errors));
+        javaFiles.add(
+                resolveRealPath(file, errors)
+        );
     }
 
     private void collectDirectory(
@@ -101,26 +141,40 @@ public final class SourceInputHandler {
         try (Stream<Path> paths = Files.walk(directory)) {
             paths.filter(Files::isRegularFile)
                     .filter(this::isJavaFile)
-                    .map(path -> resolveRealPath(path, errors))
+                    .map(path ->
+                            resolveRealPath(path, errors)
+                    )
                     .forEach(javaFiles::add);
+
         } catch (IOException exception) {
             errors.add(
                     "Could not read directory %s: %s"
-                            .formatted(directory, exception.getMessage())
+                            .formatted(
+                                    directory,
+                                    exception.getMessage()
+                            )
             );
         }
     }
 
-    private Path resolveRealPath(Path path, List<String> errors) {
+    private Path resolveRealPath(
+            Path path,
+            List<String> errors
+    ) {
         try {
             return path.toRealPath();
         } catch (IOException exception) {
             errors.add(
                     "Could not resolve path %s: %s"
-                            .formatted(path, exception.getMessage())
+                            .formatted(
+                                    path,
+                                    exception.getMessage()
+                            )
             );
 
-            return path.toAbsolutePath().normalize();
+            return path
+                    .toAbsolutePath()
+                    .normalize();
         }
     }
 

@@ -14,6 +14,7 @@ import com.hitalloazevedo.design_pattern_detector.model.ProjectModel;
 import com.hitalloazevedo.design_pattern_detector.parser.JavaSourceParser;
 import com.hitalloazevedo.design_pattern_detector.parser.ParsedSource;
 import com.hitalloazevedo.design_pattern_detector.parser.ProjectModelExtractor;
+import com.hitalloazevedo.design_pattern_detector.parser.SourceInput;
 import com.hitalloazevedo.design_pattern_detector.parser.SourceInputHandler;
 import com.hitalloazevedo.design_pattern_detector.result.AnalysisReport;
 import com.hitalloazevedo.design_pattern_detector.result.DetectionResult;
@@ -50,8 +51,11 @@ public final class AnalysisService {
     public AnalysisReport analyze(String[] arguments)
             throws IOException {
 
-        List<Path> javaFiles =
+        SourceInput input =
                 inputHandler.resolve(arguments);
+
+        List<Path> javaFiles =
+                input.javaFiles();
 
         Set<Path> sourceRoots =
                 deriveSourceRoots(javaFiles);
